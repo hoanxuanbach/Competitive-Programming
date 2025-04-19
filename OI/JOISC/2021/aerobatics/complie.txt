@@ -1,0 +1,1 @@
+g++ -std=gnu++17 -O2 -Wall -pipe -static -o aerobatics aerobatics.cpp

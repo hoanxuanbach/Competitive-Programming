@@ -1,0 +1,65 @@
+#include "Anna.h"
+#include "Bruno.h"
+#include <bits/stdc++.h>
+using namespace std;
+namespace{
+    int sz[4]={19,17,16,15};
+    string s[4]={"0100201101202102200", "01100201202102200", "1100201202102200", "011002102201200"};
+    string C="RGB";
+    int f(char x){return find(C.begin(),C.end(),x)-C.begin();}
+}
+
+std::pair<std::string, int> anna(int N, std::string S) {
+    if(N<28){
+        for(int i=0;i<N;i++) S[i]=C[(f(S[i])+1)%3];
+        return {S,N};
+    }
+    while((int)S.size()%9!=0) S+='R';
+    string res;
+    for(int i=0;i*9<N;i++){
+        for(int j=0;j<4;j++){
+            int d=s[j][i%sz[j]]-'0';
+            for(int k=0;k<3;k++){
+                if(f(S[i*9+j*2])!=k && f(S[i*9+j*2+1])!=(k+d)%3){
+                    res+=C[k];res+=C[(k+d)%3];
+                    break;
+                }
+            }
+        }
+        for(char x:C) if(x!=res.back() && x!=S[i*9+8]){res+=x;break;}
+    }
+    while((int)res.size()>N) res.pop_back();
+    return {res,28};
+}
+
+void init(int N,int l){}
+
+int bruno(string u) {
+    if((int)u.size()<=27) return 1;
+    vector<int> d(27),z(9);
+    for(int i=0;i<27;i++){
+        d[i]=(f(u[i+1])-f(u[i])+3)%3;
+        if(!d[i]) z[i%9]=1;
+    }
+    int ss=0;
+    for(int i=0;i<9;i++) if(!z[i]){
+        int j=1;
+        while(z[(i+j)%9]) j++;
+        if(j&1) ss=(i+2)%9;
+    }
+    int res=0,m=1;
+    for(int i=0;i<4;i++){
+        string cc;
+        for(int j=0;j<3;j++) cc+=char('0'+d[9*j+(2*i+ss)%9]);
+        for(int j=0;j<sz[i];j++){
+            int ok=1;
+            for(int k=0;k<3;k++) if(s[i][(j+k)%sz[i]]!=cc[k]) ok=0;
+            if(!ok) continue;
+            int k=j;
+            if(2*i+ss>=9) k=(k+1)%sz[i];
+            while(res%sz[i]!=k) res+=m;
+            m*=sz[i];break;
+        }
+    }
+    return 9*res-ss+1;
+}
