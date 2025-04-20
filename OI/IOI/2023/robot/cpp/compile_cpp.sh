@@ -1,6 +1,0 @@
-#!/bin/bash
-
-problem="robot"
-grader_name="grader"
-
-g++ -std=gnu++17 -O2 -Wall -pipe -static -o robot grader.cpp robot.cpp
