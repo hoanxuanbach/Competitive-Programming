@@ -1,0 +1,1 @@
+python simulator.py -h -s 256 -g grid.txt -d -c -m 200000 -o out.txt odometer.txt

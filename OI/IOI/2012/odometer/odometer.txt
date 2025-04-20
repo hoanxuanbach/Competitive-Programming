@@ -1,0 +1,541 @@
+jump A0
+X0:
+right
+border A1
+move
+right
+Y0:
+border Z0
+move
+jump Y0
+Z0:
+right
+A0:
+right
+B0:
+pebble C0
+jump E0
+C0:
+border X0
+move
+jump B0
+X1:
+right
+border A2
+move
+right
+Y1:
+border Z1
+move
+jump Y1
+Z1:
+right
+A1:
+right
+B1:
+get
+pebble C1
+jump E1
+C1:
+put
+border X1
+move
+jump B1
+X2:
+right
+border A3
+move
+right
+Y2:
+border Z2
+move
+jump Y2
+Z2:
+right
+A2:
+right
+B2:
+get
+get
+pebble C2
+jump E2
+C2:
+put
+put
+border X2
+move
+jump B2
+X3:
+right
+border A4
+move
+right
+Y3:
+border Z3
+move
+jump Y3
+Z3:
+right
+A3:
+right
+B3:
+get
+get
+get
+pebble C3
+jump E3
+C3:
+put
+put
+put
+border X3
+move
+jump B3
+X4:
+right
+border A5
+move
+right
+Y4:
+border Z4
+move
+jump Y4
+Z4:
+right
+A4:
+right
+B4:
+get
+get
+get
+get
+pebble C4
+jump E4
+C4:
+put
+put
+put
+put
+border X4
+move
+jump B4
+X5:
+right
+border A6
+move
+right
+Y5:
+border Z5
+move
+jump Y5
+Z5:
+right
+A5:
+right
+B5:
+get
+get
+get
+get
+get
+pebble C5
+jump E5
+C5:
+put
+put
+put
+put
+put
+border X5
+move
+jump B5
+X6:
+right
+border A7
+move
+right
+Y6:
+border Z6
+move
+jump Y6
+Z6:
+right
+A6:
+right
+B6:
+get
+get
+get
+get
+get
+get
+pebble C6
+jump E6
+C6:
+put
+put
+put
+put
+put
+put
+border X6
+move
+jump B6
+X7:
+right
+border A8
+move
+right
+Y7:
+border Z7
+move
+jump Y7
+Z7:
+right
+A7:
+right
+B7:
+get
+get
+get
+get
+get
+get
+get
+pebble C7
+jump E7
+C7:
+put
+put
+put
+put
+put
+put
+put
+border X7
+move
+jump B7
+X8:
+right
+border A9
+move
+right
+Y8:
+border Z8
+move
+jump Y8
+Z8:
+right
+A8:
+right
+B8:
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C8
+jump E8
+C8:
+put
+put
+put
+put
+put
+put
+put
+put
+border X8
+move
+jump B8
+X9:
+right
+border A10
+move
+right
+Y9:
+border Z9
+move
+jump Y9
+Z9:
+right
+A9:
+right
+B9:
+get
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C9
+jump E9
+C9:
+put
+put
+put
+put
+put
+put
+put
+put
+put
+border X9
+move
+jump B9
+X10:
+right
+border A11
+move
+right
+Y10:
+border Z10
+move
+jump Y10
+Z10:
+right
+A10:
+right
+B10:
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C10
+jump E10
+C10:
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+border X10
+move
+jump B10
+X11:
+right
+border A12
+move
+right
+Y11:
+border Z11
+move
+jump Y11
+Z11:
+right
+A11:
+right
+B11:
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C11
+jump E11
+C11:
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+border X11
+move
+jump B11
+X12:
+right
+border A13
+move
+right
+Y12:
+border Z12
+move
+jump Y12
+Z12:
+right
+A12:
+right
+B12:
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C12
+jump E12
+C12:
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+border X12
+move
+jump B12
+X13:
+right
+border A14
+move
+right
+Y13:
+border Z13
+move
+jump Y13
+Z13:
+right
+A13:
+right
+B13:
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C13
+jump E13
+C13:
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+border X13
+move
+jump B13
+X14:
+right
+border A15
+move
+right
+Y14:
+border Z14
+move
+jump Y14
+Z14:
+right
+A14:
+right
+B14:
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+get
+pebble C14
+jump E14
+C14:
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+put
+border X14
+move
+jump B14
+E14:
+put
+E13:
+put
+E12:
+put
+E11:
+put
+E10:
+put
+E9:
+put
+E8:
+put
+E7:
+put
+E6:
+put
+E5:
+put
+E4:
+put
+E3:
+put
+E2:
+put
+E1:
+put
+E0:
+A15:
