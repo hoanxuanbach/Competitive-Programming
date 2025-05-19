@@ -4,4 +4,4 @@ This Github repository contains all OI and ICPC problems I've worked so far. I s
 
 After I finish pushing all my works on this repo, I might write some editorials for JOI problems in the near future. When I was solving them, I found it pretty tough to translate and understand the Japanese editorials, so I think having English versions could really help others. 
 
-My English isn't very strong, so if you notice any mistakes or anything confusing, please help me improve those editorials.
+I'm not fluent in English, so if you notice any mistakes or anything confusing, please help me improve those editorials.
