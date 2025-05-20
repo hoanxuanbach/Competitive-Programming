@@ -1,4 +1,4 @@
-## Problem Statement
+# Problem Statement
 
 You are given an array $a$ consisting of $n$ integers.
 
@@ -13,7 +13,7 @@ Your task is to calculate how many **non-empty subarrays** of array $a$ are beau
 
 ---
 
-### Input
+## Input
 
 The first line contains a single integer $n$ $(1 \leq n \leq 2*10^5)$ — the size of the array.
 
@@ -21,13 +21,13 @@ The second line contains $n$ integers $a_1, a_2, \dots, a_n$ $(1 \leq a_i \leq 2
 
 ---
 
-### Output
+## Output
 
 Print a single integer — the number of non-empty beautiful subarrays of $a$.
 
 ---
 
-### Example
+## Example
 
 **Input**
 
