@@ -8,7 +8,7 @@ $cnt(l,r,x)$ : the number of occurrences of $x$ from $l$ to $r$
 
 $mx(l,r) : max(cnt(l,r,x)) \forall 1 \leq x \leq 2\times10^5$
 
-$A(l,r) : \{x | x \in S(l,r), cnt(l,r,x) = mx(l,r) \}$
+$A(l,r) :$ { $x | x \in S(l,r), cnt(l,r,x) = mx(l,r)$ }
 
 $B(l,r) : S(l,r) \setminus A(l,r)$
 
@@ -24,7 +24,7 @@ There are 3 cases:
 
 ### Case 1: $S(x,mid) = S(mid+1,y)$
 
-We have $S(x,mid) = \{s_1,s_2,...,s_m\}$ with $m = |S(x,mid)|$
+We have $S(x,mid) =$ { $s_1,s_2,...,s_m$ } with $m = |S(x,mid)|$
 
 $(x,y)$ is a beautiful subarray if:
 
@@ -32,9 +32,9 @@ $cnt(x,y,s_1) = cnt(x,y,s_2) = ... = cnt(x,y,s_m)$
 
 $cnt(x,mid,s_1) + cnt(mid+1,y,s_1) = ... = cnt(x,mid,s_m) + cnt(mid+1,y,s_m)$
 
-$\{cnt(x,mid,s_2) - cnt(x,mid,s_1),...,cnt(x,mid,s_m)-cnt(x,mid,s_{m-1})\} = \{cnt(mid+1,y,s_1) - cnt(mid+1,y,s_2),...,cnt(mid+1,y,s_{m-1})-cnt(mid+1,y,s_m)\}$
+{ $cnt(x,mid,s_2) - cnt(x,mid,s_1),...,cnt(x,mid,s_m)-cnt(x,mid,s_{m-1})$ } = { $cnt(mid+1,y,s_1) - cnt(mid+1,y,s_2),...,cnt(mid+1,y,s_{m-1})-cnt(mid+1,y,s_m)$ }
 
-Finally, we use hashing of $S(x,mid)$ and $\{cnt(x,mid,s_2) - cnt(x,mid,s_1),...,cnt(x,mid,s_m)-cnt(x,mid,s_{m-1})\}$ to count the number of matched $y$. 
+Finally, we use hashing of $S(x,mid)$ and { $cnt(x,mid,s_2) - cnt(x,mid,s_1),...,cnt(x,mid,s_m)-cnt(x,mid,s_{m-1})$ } to count the number of matched $y$. 
 
 ### Case 2: $S(x,mid) \subset S(mid+1,y)$ or $S(mid+1,y) \subset S(x,mid)$ 
 
@@ -54,7 +54,7 @@ $A(x,mid) \cap A(mid+1,y) = \varnothing$
 
 $mx(x,mid) = mx(mid+1,y)$
 
-If $B(x,mid) = \{s_1,s_2,...,s_m\}$ with $m = |B(x,mid)|$, $cnt(x,mid,s_i)+cnt(mid+1,y,s_i) = mx(x,mid) \forall 1 \leq i \leq m$
+If $B(x,mid) = ${ $s_1,s_2,...,s_m$ } with $m = |B(x,mid)|$, $cnt(x,mid,s_i)+cnt(mid+1,y,s_i) = mx(x,mid) \forall 1 \leq i \leq m$
 
 For each $x$, we can see that $y < pos(mid+1,r,k) \forall k \in A(x,mid)$ to satisfy the condition $A(x,mid) \cap A(mid+1,y) = \varnothing$
 
