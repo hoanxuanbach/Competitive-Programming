@@ -1,117 +1,80 @@
-// Judges with GCC >= 12 only needs Ofast
-// #pragma GCC optimize("O3,no-stack-protector,fast-math,unroll-loops,tree-vectorize")
-// MLE optimization
-// #pragma GCC optimize("conserve-stack")
-// Old judges
-// #pragma GCC target("sse4.2,popcnt,lzcnt,abm,mmx,fma,bmi,bmi2")
-// New judges. Test with assert(__builtin_cpu_supports("avx2"));
-// #pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma,tune=native")
-// Atcoder
-// #pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma")
-/*
-#include <ext/pb_ds/assoc_container.hpp>
-#include <ext/pb_ds/tree_policy.hpp>
-using namespace __gnu_pbds;
-typedef tree<int,null_type,less<int>,rb_tree_tag,tree_order_statistics_node_update> ordered_set;
-- insert(x),erase(x)
-- find_by_order(k): return iterator to the k-th smallest element
-- order_of_key(x): the number of elements that are strictly smaller
-*/
+#include "koala.h"
 #include<bits/stdc++.h>
 using namespace std;
-mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
-uniform_real_distribution<> pp(0.0,1.0);
-#define int long long
-#define ld long double
-#define pii pair<int,int>
-#define piii pair<int,pii>
-#define mpp make_pair
-#define fi first
-#define se second
-const long long inf=1e18;
-const int mod=998244353;
-const int maxn=200005;
-const int B=650;
-const int maxs=655;
-const int maxm=200005;
-const int maxq=1000005;
-const int maxl=25;
-const int maxa=1000000;
-const int root=3;
-int power(int a,int n){
-    int res=1;
-    while(n){
-        if(n&1) res=res*a%mod;
-        a=a*a%mod;n>>=1;
-    }
-    return res;
+
+int B[105],R[105];
+
+int minValue(int N, int W) {
+    for(int i=0;i<N;i++) B[i]=0;
+    B[0]=1;
+    playRound(B,R);
+    for(int i=0;i<N;i++) if(R[i]<=B[i]) return i;
+    return 0;
 }
-const int iroot=power(3,mod-2);
-const int base=101;
 
-piii par[maxn];
-vector<piii> edge[maxn];
+int maxValue(int N, int W) {
+    vector<int> ord(N);
+    iota(ord.begin(),ord.end(),0);
+    while((int)ord.size()>1){
+        for(int i=0;i<N;i++) B[i]=0;
+        for(int x:ord) B[x]=N/(int)ord.size();
+        vector<int> nxt;
+        playRound(B,R);
+        for(int x:ord) if(R[x]>B[x]) nxt.push_back(x);
+        swap(nxt,ord);
+    }
+    return ord[0];
+}
 
-void solve(){
-    int N=100,W=200;
-    for(int i=0;i<=N;i++) par[i]={-1,{-1,-1}};
-    for(int i=0;i<=N;i++){
-        vector<int> a(i),b(N-i);
-        iota(a.begin(),a.end(),1);
-        iota(b.begin(),b.end(),i+1);
-        reverse(a.begin(),a.end());
-        reverse(b.begin(),b.end());
-        a.insert(a.begin(),0);
-        b.insert(b.begin(),0);
-        for(int j=1;j<=i;j++) a[j]+=a[j-1];
-        for(int j=1;j<=N-i;j++) b[j]+=b[j-1];
-        for(int x=0;x*i<=W && x<=W*(i>0);x++){
-            for(int y=0;x*i+y*(N-i)<=W && y<=W*(i<N);y++){
-                int Max=-1;
-                vector<pii> p;
-                for(int j=0;j<=i && j*(x+1)<=W;j++){
-                    int k=min(N-i,(W-j*(x+1))/(y+1));
-                    int num=a[j]+b[k];
-                    if(num>Max) Max=num,p={{j,k}};
-                    else if(num==Max) p.push_back({j,k});
-                }
-                if((int)p.size()==1){
-                    int j=p[0].fi,k=p[0].se;
-                    edge[i].push_back({i-j,{x,y}});
-                    edge[i].push_back({N-k,{x,y}});
-                }
+int greaterValue(int N, int W) {
+    vector<int> x(8);
+    iota(x.begin(),x.end(),1);
+    x.pop_back();x.back()++;
+    int l=0,r=6;
+    while(l<=r){
+        int mid=(l+r)>>1,d=x[mid];
+        for(int i=0;i<N;i++) B[i]=0;
+        B[0]=B[1]=d;
+        playRound(B,R);
+        if(R[0]>d && R[1]<=d) return 0;
+        else if(R[1]>d && R[0]<=d) return 1;
+        if(R[0]<=d) r=mid-1;
+        else l=mid+1;
+    }
+    return 0;
+}
+
+void allValues(int N, int W, int *P) {
+    if (W == 2*N) {
+        vector<int> ord(N);
+        iota(ord.begin(),ord.end(),0);
+        stable_sort(ord.begin(),ord.end(),[&](int x,int y){
+            for(int i=0;i<N;i++) B[i]=0;
+            B[x]=B[y]=N;
+            playRound(B,R);
+            return R[y];
+        });
+        for(int i=0;i<N;i++) P[ord[i]]=i+1;
+    } else{
+        int L=1;
+        vector<int> ord(N);
+        iota(ord.begin(),ord.end(),0);
+        function<void(vector<int>)> dnc = [&](vector<int> p){
+            if((int)p.size()==1){
+                P[p[0]]=L++;
+                return;
             }
-        }
-
-    }
-    par[0].fi=par[N].fi=-2;
-    queue<int> q;
-    q.push(0);q.push(N);
-    int cnt=0;
-    while(!q.empty()){
-        int x=q.front();q.pop();
-        for(auto [y,p]:edge[x]){
-            if(par[y].fi==-1){
-                cnt++;
-                if(cnt<=5){
-                    cout << x << ' ' << y << ' ' << p.fi << ' ' << p.se << '\n';
-                }
-                par[y]={x,p};
-                q.push(y);
+            int D=min((int)sqrt(2*L),W/(int)p.size());
+            for(int i=0;i<N;i++) B[i]=0;
+            for(int x:p) B[x]=D;
+            playRound(B,R);
+            vector<int> lt,rt;
+            for(int x:p){
+                if(R[x]) rt.push_back(x);
+                else lt.push_back(x);
             }
-        }
-    }
-    for(int i=0;i<=N;i++){
-        if(par[i].fi==-1){
-            cout << i << '\n';
-        }
+            dnc(lt);dnc(rt);
+        };
+        dnc(ord);
     }
 }
-
-signed main(){
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);cout.tie(NULL);
-    int test=1;//cin >> test;
-    while(test--) solve();
-}
-
