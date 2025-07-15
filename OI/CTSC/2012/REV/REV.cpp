@@ -17,16 +17,20 @@ int query(int t,int x){
     return res;
 }
 
+int cnt[1005][1005];
+
 signed main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);cout.tie(NULL);
-    for(int test=7;test<=7;test++){
-        cout << test << endl;
+    for(int test=6;test<=6;test++){
+        if(test==4) continue;
+        cerr << test << endl;
         string in="rev"+to_string(test)+".in";
+        //string in = "rev.in";
         ifstream cin(in);
         string out="rev"+to_string(test)+".out";
         ofstream cout(out);
-        /*
+        
         auto solve = [&]{
             cin >> n >> m >> q;
             if(n>m) sw=true,swap(n,m);
@@ -59,8 +63,8 @@ signed main(){
                     else return rx<ry;
                 }
             });
-
             for(int a=1;a<=n;a++) for(int b=a;b<=n;b++){
+                cerr << a << ' ' << b << endl;
                 long long total=0;
                 int l=1,r=0;
                 for(int i=1;i<=q;i++){
@@ -98,12 +102,11 @@ signed main(){
                     update(1,A[b][i],-1);
                 }
             }
-            long long total=0;
-            for(int i=1;i<=q;i++) total^=res[i];
-            cout << total << '\n';
+            for(int i=1;i<=q;i++) cout << res[i] << '\n';
         };
-        solve();
-        */
+        //solve();
+
+        
         auto solve7 = [&](){
             int n,m,q;cin >> n >> m >> q;
             vector<vector<int>> A(n+1,vector<int>(m+1));
@@ -143,10 +146,30 @@ signed main(){
                     total+=1LL*cx[a][b]*cy[a^1][b];
                     //cout << cx[a][b] << ' ' << cy[a][b] << '\n';
                 }
-                ans^=total;
+                cout << total << '\n';
             }
-            cout << ans << '\n';
+            //cout << ans << '\n';
+
         };
-        solve7();
+        //solve7();
+        auto solve6 = [&](){
+            int n,m,q;cin >> n >> m >> q;
+            vector<vector<int>> A(n+1,vector<int>(m+1));
+            for(int i=1;i<=n;i++) for(int j=1;j<=m;j++) cin >> A[i][j];
+            
+            for(int i=1;i<=q;i++){
+                cin >> x1[i] >> Y[i] >> x2[i] >> y2[i];
+                res[i]=0;
+            }
+            for(int a=1;a<=n;a++) for(int b=a;b<=n;b++){
+                cerr << a << ' ' << b << endl;
+                for(int i=m;i>=1;i--) for(int j=i;j<=m;j++){
+                    cnt[i][j]=(A[a][i]>A[b][j])+cnt[i+1][j]+cnt[i][j-1]-cnt[i+1][j-1];
+                }
+                for(int i=1;i<=q;i++) if(x1[i]<=a && b<=x2[i]) res[i]+=cnt[Y[i]][y2[i]];
+            }
+            for(int i=1;i<=q;i++) cout << res[i] << '\n';
+        };
+        solve6();
     }
 }
