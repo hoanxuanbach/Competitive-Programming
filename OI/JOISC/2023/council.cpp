@@ -7,8 +7,8 @@
 // New judges. Test with assert(__builtin_cpu_supports("avx2"));
 // #pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma,tune=native")
 // Atcoder
-#pragma GCC optimize("Ofast,unroll-loops")
-#pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma")
+//#pragma GCC optimize("Ofast,unroll-loops")
+//#pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma")
 #include<bits/stdc++.h>
 using namespace std;
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -37,8 +37,11 @@ int power(int a,int n){
 }
 int n,m,Min[1030][1030],num[25],cur[maxn],ok[1030][1030];
 vector<int> x[1030];
+int cnt[1030*1030];
+
 void solve(){
     cin >> n >> m;
+    for(int i=0;i<(1<<m);i++) cnt[i]=__builtin_popcount(i);
     for(int i=1;i<=n;i++){
         for(int j=0;j<m;j++){
             int a;cin >> a;
@@ -51,7 +54,7 @@ void solve(){
         for(int k:x[i]) ok[i][k]++;
         for(int j=0;j<(1<<(m-m/2));j++){
             Min[i][j]=m+1;
-            for(int k:x[i]) Min[i][j]=min(Min[i][j],__builtin_popcount(k&j));
+            for(int k:x[i]) Min[i][j]=min(Min[i][j],cnt[k&j]);
         }
     }
     for(int i=1;i<=n;i++){
@@ -62,14 +65,14 @@ void solve(){
             else if(total>(n/2)) ans++;
         }
         for(int j=0;j<(1<<m/2);j++){
-            if(j!=f1) add=min(add,__builtin_popcount(check&j)+Min[j][check>>(m/2)]);
+            if(j!=f1) add=min(add,cnt[check&j]+Min[j][check>>(m/2)]);
             else{
                 for(int k=0;k<(1<<(m-m/2));k++){
-                    if(ok[j][k] && (k!=f2 || ok[j][k]>=2)) add=min(add,__builtin_popcount(check&j)+__builtin_popcount(k&(check>>(m/2))));
+                    if(ok[j][k] && (k!=f2 || ok[j][k]>=2)) add=min(add,cnt[check&j]+cnt[k&(check>>(m/2))]);
                 }
             }
         }
-        ans+=__builtin_popcount(check)-add;
+        ans+=cnt[check]-add;
         cout << ans << '\n';
     }
 }

@@ -7,8 +7,8 @@
 // New judges. Test with assert(__builtin_cpu_supports("avx2"));
 // #pragma GCC target("avx2,popcnt,lzcnt,abm,bmint,bmint2,fma,tune=native")
 // Atcoder
-#pragma GCC optimize("Ofast,unroll-loops")
-#pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma")
+//#pragma GCC optimize("Ofast,unroll-loops")
+//#pragma GCC target("avx2,popcnt,lzcnt,abm,bmi,bmi2,fma")
 #include<bits/stdc++.h>
 using namespace std;
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());

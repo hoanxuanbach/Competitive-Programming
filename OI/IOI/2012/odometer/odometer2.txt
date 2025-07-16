@@ -1,0 +1,110 @@
+
+L:
+pebble A
+
+C:
+right
+right
+move
+pebble D
+
+left
+move
+right
+E:
+pebble F
+right
+move
+right
+move
+halt
+
+F:
+get
+right
+right
+move
+put
+right
+right
+move
+
+jump E
+
+D:
+get
+right
+right
+move
+put
+jump C
+
+A:
+get
+right
+right
+move
+put
+right
+right
+move 
+right
+move
+
+pebble B
+
+right
+right
+move
+right
+
+G:
+right
+right
+move
+pebble H
+
+left
+move
+right
+I:
+pebble J
+right
+right
+move
+halt
+
+J:
+get
+right
+right
+move
+put
+right
+right
+move
+
+jump I
+
+H:
+get
+right
+right
+move
+put
+jump G
+
+
+B:
+get
+right
+move
+put
+right
+right
+move
+left
+move
+right 
+
+jump L

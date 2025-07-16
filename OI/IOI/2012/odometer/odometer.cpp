@@ -7,7 +7,7 @@ void p(string s){
 }
 
 signed main(){
-    freopen("odometer.txt","w",stdout);
+    //freopen("odometer.txt","w",stdout);
     p("jump A0");
     for(int i=0;i<=14;i++){
         string s=to_string(i),t=to_string(i+1);

@@ -12,8 +12,6 @@ struct Rec{
 
 namespace B1{
     int tree[4*maxn],lazy[4*maxn];
-    vector<int> pos[maxn];
-
     void update(int l,int r,int id,int tl,int tr,int val){
         if(tr<l || r<tl) return;
         if(tl<=l && r<=tr){
@@ -27,14 +25,18 @@ namespace B1{
     }
     void solve(){
         auto check = [&](int d){
-            for(int i=1;i<=N-d+1;i++) pos[i].clear();
+            vector<pii> pos;
             for(int i=1;i<=4*(M-d+1);i++) tree[i]=lazy[i]=0;
             for(int i=1;i<=P;i++){
                 int x=max(1,R[i].x-d+1),u=R[i].u;
-                pos[x].push_back(i);pos[u+1].push_back(i);
+                pos.push_back({x,i});
+                pos.push_back({u+1,i});
             }
+            sort(pos.begin(),pos.end());
+            int p=0;
             for(int i=1;i<=N-d+1;i++){
-                for(int id:pos[i]){
+                while(p<(int)pos.size() && pos[p].fi==i){
+                    int id=pos[p++].se;
                     int l=max(1,R[id].y-d+1),r=R[id].v,c=C[id];
                     if(i==R[id].u+1) c=-c;
                     update(1,M-d+1,1,l,r,c);
@@ -55,36 +57,36 @@ namespace B1{
 }
 
 namespace B0{
-    vector<int> add[maxn],del[maxn];
     struct node{
         int val=0,sz=0,lt=0,rt=0,len=0;
         node(int s=0){
             sz=lt=rt=len=s;
         }
-        friend node operator+(node a,node b){
-            node res;
-            res.len=a.len+b.len;
-            res.val=min(a.val,b.val);
-            if(a.val<b.val){
-                res.sz=a.sz;
-                res.lt=a.lt;
-                res.rt=0;
-            }
-            else if(a.val>b.val){
-                res.sz=b.sz;
-                res.rt=b.rt;
-                res.lt=0;
-            }
-            else{
-                res.sz=max({a.sz,b.sz,a.rt+b.lt});
-                res.lt=a.lt+(a.lt==a.len)*b.lt;
-                res.rt=b.rt+(b.rt==b.len)*a.rt;
-            }
-            return res;
+        void init(int s){
+            sz=lt=rt=len=s;
         }
     }tree[4*maxn];
+    void merge(node &res,node &a,node &b){
+        res.len=a.len+b.len;
+        res.val=min(a.val,b.val);
+        if(a.val<b.val){
+            res.sz=a.sz;
+            res.lt=a.lt;
+            res.rt=0;
+        }
+        else if(a.val>b.val){
+            res.sz=b.sz;
+            res.rt=b.rt;
+            res.lt=0;
+        }
+        else{
+            res.sz=max({a.sz,b.sz,a.rt+b.lt});
+            res.lt=a.lt+(a.lt==a.len)*b.lt;
+            res.rt=b.rt+(b.rt==b.len)*a.rt;
+        }
+    }
     void build(int l,int r,int id){
-        tree[id]=node(r-l+1);
+        tree[id].init(r-l+1);
         if(l==r) return;
         int mid=(l+r)>>1;
         build(l,mid,id<<1);build(mid+1,r,id<<1|1);
@@ -99,24 +101,34 @@ namespace B0{
         }
         int mid=(l+r)>>1;
         update(l,mid,id<<1,tl,tr,val);update(mid+1,r,id<<1|1,tl,tr,val);
-        tree[id]=tree[id<<1]+tree[id<<1|1];
+        merge(tree[id],tree[id<<1],tree[id<<1|1]);
         tree[id].val+=lazy[id];
     }
     void solve(){
+        vector<pii> add,del;
         for(int i=1;i<=P;i++){
-            add[R[i].x].push_back(i);
-            del[R[i].u].push_back(i);
+            add.push_back({R[i].x,i});
+            del.push_back({R[i].u,i});
         }
-        int res=0;
+        sort(add.begin(),add.end());
+        sort(del.begin(),del.end());
+
+        int res=0,pa=0,pd=0;
         build(1,M,1);
         for(int i=1,j=0;i<=N;i++){
             while(j<=N){
                 if((!tree[1].val)*tree[1].sz<j-i+1) break;
                 j++;
-                for(int id:add[j]) update(1,M,1,R[id].y,R[id].v,1);
+                while(pa<(int)add.size() && add[pa].fi==j){
+                    int id=add[pa++].se;
+                    update(1,M,1,R[id].y,R[id].v,1);
+                }
             }
             res=max(res,j-i);
-            for(int id:del[i]) update(1,M,1,R[id].y,R[id].v,-1);
+            while(pd<(int)del.size() && del[pd].fi==i){
+                int id=del[pd++].se;
+                update(1,M,1,R[id].y,R[id].v,-1);
+            }
         }
         cout << res << '\n';
     }

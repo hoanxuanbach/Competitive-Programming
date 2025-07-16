@@ -1,0 +1,45 @@
+right
+S:
+pebble A
+move
+jump S
+
+A:
+move
+pebble B
+border T
+
+jump A
+
+B:
+right
+right
+get
+move
+put
+jump C
+
+C:
+move
+pebble D
+jump C
+
+D:
+right
+right
+get
+move
+put
+jump A
+
+T:
+right
+right
+
+L:
+pebble H 
+move
+jump L
+
+H:
+halt

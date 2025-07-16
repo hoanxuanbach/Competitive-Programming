@@ -20,8 +20,8 @@ int n,x[maxn],y[maxn];
 signed main(){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);cout.tie(NULL);
-    for(int test=5;test<=10;test++){
-        if(test==1 || test==4 || test==3 || test==6 || test==10) continue;
+    for(int test=4;test<=9;test++){
+        cerr << test << endl;
         string ss=to_string(test);
         if(test<=9) ss="0"+ss;
         string inp=ss+".in";

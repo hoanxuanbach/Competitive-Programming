@@ -1,0 +1,224 @@
+right
+A:
+B:
+move
+pebble C
+move
+pebble C
+move
+pebble C
+move
+pebble C
+move
+pebble C
+move
+pebble C
+move
+pebble C
+move
+pebble C
+border F 
+jump B
+
+C:
+get
+right
+right
+
+D:
+border E
+move
+jump D
+
+E:
+put
+right
+right
+jump B
+
+F:
+right
+move
+right
+
+G:
+move
+pebble H
+move
+pebble H
+move
+pebble H
+move
+pebble H
+move
+pebble H
+move
+pebble H
+move
+pebble H
+move
+pebble H
+border K 
+jump G
+
+H:
+get
+right
+right
+
+I:
+border J
+move
+jump I
+
+J:
+put
+right
+right
+jump G
+
+K:
+left
+border L
+move
+left
+jump A
+
+L:
+right
+right
+
+M:
+border N
+move
+jump M
+
+N:
+right
+right
+
+O:
+move
+pebble P
+move
+pebble P
+move
+pebble P
+move
+pebble P
+move
+pebble P
+move
+pebble P
+move
+pebble P
+move
+pebble P
+border S 
+jump O
+
+P:
+get
+right
+right
+
+Q:
+border R
+move
+jump Q
+
+R:
+put
+right
+right
+jump O
+
+S:
+left
+
+T:
+border U
+move
+jump T
+
+U:
+left
+
+5:
+border 6
+move
+jump 5
+
+6:
+right
+right
+
+V:
+move
+pebble W
+move
+pebble W
+move
+pebble W
+move
+pebble W
+move
+pebble W
+move
+pebble W
+move
+pebble W
+move
+pebble W
+border Z 
+jump V
+
+W:
+get
+right
+right
+
+X:
+border Y
+move
+jump X
+
+Y:
+put
+right
+right
+jump V
+
+Z:
+right
+right
+
+7:
+border 8
+move
+jump 7
+
+8:
+right
+
+0:
+pebble 1
+halt
+
+1:
+left
+left
+get
+2:
+border 3
+move
+jump 2
+3:
+put
+right
+right
+4:
+border 0
+move
+jump 4
+
