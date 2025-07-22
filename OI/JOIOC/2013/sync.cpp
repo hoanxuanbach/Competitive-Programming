@@ -48,6 +48,25 @@ int power(int a,int n){
 }
 const int iroot=power(3,mod-2);
 const int base=101;
+namespace BIT{
+    int n;
+    vector<int> bit;
+    void init(int N){
+        n=N;
+        bit.assign(n+1,0);
+    }
+    int query(int x){
+        int res=0;
+        for(int i=x;i>=1;i-=(i&(-i))) res+=bit[i];
+        return res;
+    }
+    void update(int x,int val){
+        for(int i=x;i<=n;i+=(i&(-i))) bit[i]+=val;
+    }
+    void update_range(int l,int r,int val){
+        update(l,val);update(r+1,-val);
+    }
+}
 void solve(){
     int n,m,q;cin >> n >> m >> q;
     vector<vector<int>> edge(n+1),par(n+1,vector<int>(maxl,0));

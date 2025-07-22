@@ -124,13 +124,27 @@ void inicjuj(int N,vector<int> t){
     for(lli i=1;i<=n;i++) Merge_Sort_Tree::update(1,n,1,i);
     Merge_Sort_Tree::build(1,n,1);
 }
-/*
+
 signed main(){
     ios_base::sync_with_stdio(false);
+    cin.tie(NULL);cout.tie(NULL);
+    /*
     inicjuj(10, {1,1,1,1,1,1,1,1,1,1});
     cout << ile_powtorzen(0, 9) << '\n';
     cout << ile_powtorzen(0, 6) << '\n';
     cout << ile_powtorzen(4, 6) << '\n';
     cout << ile_powtorzen(3, 4) << '\n';
+    */
+    char C;
+    int n,q;
+    cin >> q >> C >> n;q--;
+
+    vector<int> a(n);
+    for(int i=0;i<n;i++) cin >> a[i];
+    inicjuj(n,a);
+    for(int i=0;i<q;i++){
+        int l,r;cin >> C >> l >> r;
+        cout << ile_powtorzen(l,r) << '\n';
+    }
 }
-*/
+

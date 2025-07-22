@@ -55,7 +55,7 @@ int f(int u,int v){
 int query(int k,int u,int v){
     int w=lca(u,v),p=parent[w][0],cur=-1;
     //cout << u << ' ' << v << ' ' << w << ' ' << p << '\n';
-    for(int i=0;i<=(sz-1)/bl;i++){
+    for(int i=(sz-1)/bl;i>=0;i--){
         int add=s[i].query(u)+s[i].query(v)-s[i].query(w)-s[i].query(p);
         //cout << add << '\n';
         if(add<k) k-=add;
@@ -63,7 +63,7 @@ int query(int k,int u,int v){
     }
     //cout << '*' << cur << '\n';
     if(cur==-1) return -1;
-    for(int i=cur*bl;i<min(sz,(cur+1)*bl);i++){
+    for(int i=min(sz,(cur+1)*bl)-1;i>=cur*bl;i--){
         if(!c[i]) continue;
         int add=f(com[i].se,u)+f(com[i].se,v)-f(com[i].se,p)-f(com[i].se,w);
         if(k==add) return com[i].fi;
@@ -114,8 +114,6 @@ void solve(){
     }
 }
 signed main(){
-    freopen("4.in","r",stdin);
-    freopen("out.txt","w",stdout);
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);cout.tie(NULL);
     int test=1;//cin >> test;

@@ -30,41 +30,54 @@ uniform_real_distribution<> pp(0.0,1.0);
 const int inf=1e18;
 const int mod=998244353;
 const int mod2=1e9+7;
-const int maxn=200005;
-const int bl=650;
-const int maxs=650;
-const int maxm=200005;
-const int maxq=500005;
-const int maxl=20;
-const int maxa=1000000;
-int power(int a,int n){
-    int res=1;
-    while(n){
-        if(n&1) res=res*a%mod;
-        a=a*a%mod;n>>=1;
+const int maxn=10005;
+int n,c,dp[maxn][20];
+vector<pii> s[maxn];
+int cal(int mask){
+    for(int j=1;j<=n;j++){
+        for(int i=0;i<16;i++) dp[j][i]=-inf;
+    }
+    dp[4][mask]=0;
+    for(int i=4;i<n;i++){
+        for(int j=0;j<16;j++){
+            if(dp[i][j]==-inf) continue;
+            for(int k=0;k<2;k++){
+                int add=0,cm=j+k*(1<<4);
+                for(pii x:s[i+1]) add+=((cm&x.fi) || ((cm^((1<<5)-1))&x.se));
+                dp[i+1][cm>>1]=max(dp[i+1][cm>>1],dp[i][j]+add);
+            }
+        }
+    }
+    int res=0;
+    for(int i=0;i<16;i++){
+        int cur=dp[n][i],cm=i;
+        if(cur==-inf) continue;
+        for(int j=1;j<=4;j++){
+            cm+=((mask>>(j-1))&1)*(1<<4);
+            for(pii x:s[j]) cur+=((cm&x.fi) || ((cm^((1<<5)-1))&x.se));
+            cm>>=1;
+        }
+        res=max(res,cur);
     }
     return res;
 }
-int n,k,a[maxn];
-pii dp[maxn];
-pii query(int x){
-    dp[1]=min(dp[0],make_pair(a[1]-x,-1LL));
-    for(int i=2;i<=n;i++) dp[i]=min(dp[i-1],make_pair(dp[i-2].fi+a[i]-x,dp[i-2].se-1));
-    return dp[n];
-}
 void solve(){
-    cin >> n >> k;
-    for(int i=1;i<=n;i++) cin >> a[i];
-    for(int i=1;i<n;i++) a[i]=a[i+1]-a[i];
-    n--;
-    int l=0,r=1e9,Min=inf,add=0;
-    while(r>=l){
-        int mid=(r+l)>>1;
-        pii res=query(mid);
-        if(-res.se<k) l=mid+1;
-        else{Min=res.fi;add=mid;r=mid-1;}
+    cin >> n >> c;
+    for(int i=1;i<=c;i++){
+        int e,f,l,a,s1=0,s2=0;cin >> e >> f >> l;
+        while(f--){
+            cin >> a;a=(a-e+n)%n;
+            if(a<=4) s1^=(1<<a);
+        }
+        while(l--){
+            cin >> a;a=(a-e+n)%n;
+            if(a<=4) s2^=(1<<a);
+        }
+        s[(e+3)%n+1].push_back({s1,s2});
     }
-    cout << Min+k*add << '\n';
+    int ans=0;
+    for(int i=0;i<16;i++) ans=max(ans,cal(i));
+    cout << ans << '\n';
 }
 signed main(){
     ios_base::sync_with_stdio(false);
