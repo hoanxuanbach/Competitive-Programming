@@ -1,38 +1,131 @@
 #include<bits/stdc++.h>
+#include<x86intrin.h>
 using namespace std; 
-#define ll long long
 #define pii pair<int,int>
 #define piii pair<pii,int> 
 #define fi first
 #define se second
 
-// T should be able to hold 2^(width+1)-1
-// T_large should be able to hold the square of that
-// Internally, the numbers are stored in binary with LSB first.
-template<class T, class T_large, signed int width>
-struct bigint_base{
-	int sign = 0; // -1 (negative), 0 (zero), 1 (positive)
+// Internally, the numbers are stored in binary in little endian order.
+// Negative numbers are assumed to have infinite leading ones, represented in two's complement.
+// No leading ~0 allowed for negative numbers, and no leading 0 allowed for non-negative numbers. This ensures that each integer has a unique representation.
+struct bigint{
+	using T = unsigned long long;
+	using T_large = __uint128_t;
+	static constexpr signed int width = 8 * sizeof(T);
+	static constexpr T pad[2] = {T(0), ~T(0)};
+	bool sign = 0; // 0 (non-negative), 1 (negative)
 	vector<T> data;
-	void trim(){
-		while(!data.empty() && !data.back()) data.pop_back();
-		if(data.empty()) sign = 0;
+	void _trim(){
+		while(!data.empty() && data.back() == pad[sign]) data.pop_back();
 	}
-	size_t size() const{ return (int)data.size(); }
 	bool _is_valid() const{
-		static constexpr T base = T(1) << width;
-		for(auto x: data) assert(0 <= x && x < base);
-		return sign ? !data.empty() && data.back() : data.empty();
+		return data.empty() || data.back() != pad[sign];
 	}
-	bigint_base(){ }
-	// Only accepts base 2
-	bigint_base(const string &s, unsigned int base = 2){
-		if(base == 2){
-			int pos = 0;
-			sign = 1;
-			while(pos < (int)s.size() && (s[pos] == '-' || s[pos] == '+')){
-				if(s[pos] == '-') sign = -sign;
-				++ pos;
+	// Assumes x is non-zero
+	static void _negate(vector<T> &x){
+		for(auto &d: x) d = ~d;
+		int i = 0;
+		while(i < (int)x.size() && !~x[i]) x[i ++] = 0;
+		if(i == (int)x.size()) x.push_back(1);
+		else ++ x[i];
+	}
+	static void _add_apply(bool &xsign, vector<T> &x, bool ysign, const vector<T> &y){
+		if(!ysign && y.empty()) return;
+		if(x.size() < y.size()) x.resize(y.size(), pad[xsign]);
+		unsigned char carry = 0;
+		for(auto i = 0; i < (int)y.size(); ++ i) carry = _addcarry_u64(carry, x[i], y[i], &x[i]);
+		for(auto i = (int)y.size(); i < (int)x.size() && carry != ysign; ++ i) carry = _addcarry_u64(carry, x[i], pad[ysign], &x[i]);
+		if(carry != ysign){
+			if(xsign == ysign) x.push_back(pad[xsign] << 1 | carry);
+			else xsign = !xsign;
+		}
+	}
+	static void _subtract_apply(bool &xsign, vector<T> &x, bool ysign, const vector<T> &y){
+		if(!ysign && y.empty()) return;
+		if(x.size() < y.size()) x.resize(y.size(), pad[xsign]);
+		unsigned char borrow = 0;
+		for(auto i = 0; i < (int)y.size(); ++ i) borrow = _subborrow_u64(borrow, x[i], y[i], &x[i]);
+		for(auto i = (int)y.size(); i < (int)x.size() && borrow != ysign; ++ i) borrow = _subborrow_u64(borrow, x[i], pad[ysign], &x[i]);
+		if(borrow != ysign){
+			if(xsign == ysign) xsign = !xsign;
+			else x.push_back(pad[xsign] ^ 1);
+		}
+	}
+	// Assumes both x and y are positive.
+	static vector<T> _naive_multiplication(const vector<T> &x, const vector<T> &y){
+		if(x.empty() || y.empty()) return {};
+		vector<T> z(x.size() + y.size() - 1);
+		for(auto i = 0; i < (int)x.size(); ++ i) for(auto j = 0; j < (int)y.size(); ++ j){
+			T_large rem = (T_large)x[i] * y[j];
+			for(auto k = i + j; rem; ++ k){
+				if((int)z.size() <= k) z.push_back(0);
+				rem += z[k];
+				z[k] = rem & ~T(0);
+				rem >>= width;
 			}
+		}
+		return z;
+	}
+	template<int karatsuba_threshold = 90>
+	static vector<T> _karatsuba_multiplication(const vector<T> &x, const vector<T> &y){
+		int n = (int)x.size(), m = (int)y.size();
+		if(min(n, m) <= karatsuba_threshold) return _naive_multiplication(x, y);
+		int split = min(max(n, m) >> 1, min(n, m));
+		vector<T> x0(x.begin(), x.begin() + split), x1(x.begin() + split, x.end());
+		vector<T> y0(y.begin(), y.begin() + split), y1(y.begin() + split, y.end());
+		auto z0 = _karatsuba_multiplication(x0, y0);
+		auto z2 = _karatsuba_multiplication(x1, y1);
+		bool temp = 0;
+		_add_apply(temp, x0, temp, x1);
+		_add_apply(temp, y0, temp, y1);
+		auto z1 = _karatsuba_multiplication(x0, y0);
+		_subtract_apply(temp, z1, temp, z0);
+		_subtract_apply(temp, z1, temp, z2);
+		z1.insert(z1.begin(), split, 0);
+		z2.insert(z2.begin(), split << 1, 0);
+		_add_apply(temp, z2, temp, z1);
+		_add_apply(temp, z2, temp, z0);
+		return z2;
+	}
+	// TODO: implement Toom-Cook, and Schönhage–Strassen
+	static vector<T> _multiply(const vector<T> &x, const vector<T> &y){
+		return _karatsuba_multiplication(x, y);
+	}
+	bigint(){ }
+	template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>
+	bigint(U x){
+		if(x < 0){
+			*this = -bigint(-x);
+			return;
+		}
+		while(x){
+			data.push_back(x & ~T(0));
+			x /= T_large(1) << width;
+		}
+	}
+	template<class U, typename enable_if<is_floating_point_v<U>>::type* = nullptr>
+	bigint(U x): bigint(llround(x)){ }
+	// MSB at a.back()
+	template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>
+	bigint(bool sign, const vector<U> &a, U base){
+		bigint x{};
+		for(auto d: a){
+			assert(0 <= d && d < base);
+			x = base * x + d;
+		}
+		*this = sign ? -x : x;
+	}
+	// MSB at s.front()
+	bigint(const string &s, unsigned int base){
+		assert(base >= 2);
+		int pos = 0;
+		while(pos < (int)s.size() && (s[pos] == '-' || s[pos] == '+')){
+			if(s[pos] == '-') sign = !sign;
+			++ pos;
+		}
+		assert(pos < (int)s.size());
+		if(base == 2){
 			for(auto i = (int)s.size() - 1; i >= pos; i -= width){
 				T x = 0;
 				for(auto j = max(pos, i - width + 1); j <= i; ++ j){
@@ -41,280 +134,606 @@ struct bigint_base{
 				}
 				data.push_back(x);
 			}
-			trim();
+			while(!data.empty() && !data.back()) data.pop_back();
+		}
+		else if(base <= 10){
+			bigint x{};
+			for(auto i = pos; i < (int)s.size(); ++ i){
+				assert(isdigit(s[i]));
+				x = base * x + (s[i] - '0');
+			}
+			if(sign) x = -x;
+			*this = x;
+		}
+		else if(base == 16){
+			// 0, ..., 9, A, B, C, D, E, F
+			bigint x{};
+			for(auto i = pos; i < (int)s.size(); ++ i){
+				assert(isdigit(s[i]) || isupper(s[i]) && s[i] <= 'F');
+				x = base * x + (isdigit(s[i]) ? s[i] - '0' : s[i] - 'A' + 10);
+			}
+			if(sign) x = -x;
+			*this = x;
 		}
 		else assert(false);
+		_trim();
 		assert(_is_valid());
 	}
-	template<class U, typename enable_if<is_integral<U>::value>::type* = nullptr>
-	bigint_base(U x){
-		int sign = x < 0 ? -1 : 1;
-		x = abs(x);
-		string s;
-		while(x){
-			s.push_back((x & 1) + '0');
-			x >>= 1;
+	bool has_single_bit() const{
+		assert(sign == 0);
+		int cnt = 0;
+		for(auto x: data){
+			cnt += __builtin_popcountll(x);
+			if(cnt == 2) return false;
 		}
-		if(sign == -1) s.push_back('-');
-		reverse(s.begin(), s.end());
-		*this = bigint_base(s);
+		return cnt == 1;
 	}
-	friend ostream &operator<<(ostream &out, const bigint_base &x){
-		if(!x) return out << '0';
-		if(x.sign < 0) out << '-';
-		assert(x.data.back());
-		for(int i = __lg(x.data.back()); i >= 0; -- i) out << (x.data.back() >> i & 1);
-		for(auto i = (int)x.size() - 2; i >= 0; -- i) out << bitset<width>(x.data[i]);
-		return out;
+	int bit_width() const{
+		assert(sign == 0);
+		if(data.empty()) return 0;
+		return __lg(data.back()) + 64 * ((int)data.size() - 1) + 1;
+	}
+	bigint bit_ceil() const{
+		if(*this <= 1) return bigint{1};
+		return bigint{1} << (*this - 1).bit_width();
+	}
+	bigint bit_floor() const{
+		if(*this == 0) return 0;
+		return bigint{1} << this->bit_width() - 1;
+	}
+	int popcount() const{
+		assert(sign == 0);
+		int cnt = 0;
+		for(auto x: data) cnt += __builtin_popcountll(x);
+		return cnt;
+	}
+	int countr_zero() const{
+		assert(sign == 0);
+		int res = 0;
+		for(auto i = 0; i < (int)data.size(); ++ i){
+			if(data[i]){
+				res += __builtin_ctzll(data[i]);
+				break;
+			}
+			res += 64;
+		}
+		return res;
+	}
+	int countr_one() const{
+		assert(sign == 0);
+		int res = 0;
+		for(auto i = 0; i < (int)data.size(); ++ i){
+			if(data[i] != ~T{0}){
+				res += __builtin_ctzll(~data[i]);
+				break;
+			}
+			res += 64;
+		}
+		return res;
+	}
+	int find_first() const{
+		assert(sign == 0);
+		if(!*this) return numeric_limits<int>::max();
+		int i = 0;
+		while(!data[i]) ++ i;
+		return 64 * i + __builtin_ctzll(data[i]);
+	}
+	int find_next(int pos) const{
+		assert(sign == 0);
+		assert(0 <= pos);
+		int b = (pos + 1) / 64;
+		if(b >= (int)data.size()) return numeric_limits<int>::max();
+		if(data[b] >> (pos + 1) % 64) return __builtin_ctzll(data[b] >> (pos + 1) % 64) + pos + 1;
+		++ b;
+		while(!data[b]) ++ b;
+		return 64 * b + __builtin_ctzll(data[b]);
+	}
+	int find_last() const{
+		assert(sign == 0);
+		if(!*this) return -1;
+		return 64 * ((int)data.size() - 1) + __builtin_ctzll(data.back());
+	}
+	int find_prev(int pos) const{
+		assert(sign == 0);
+		assert(0 <= pos);
+		if(!*this) return -1;
+		int b = pos / 64;
+		if(b >= (int)data.size()) return 64 * ((int)data.size() - 1) + __builtin_ctzll(data.back());
+		if(data[b] << 64 - pos) return __lg(data[b] << 64 - pos >> 64 - pos) + 64 * b;
+		-- b;
+		while(b >= 0 && !data[b]) -- b;
+		return b >= 0 ? __builtin_ctzll(data[b]) : -1;
+	}
+	bool operator[](int pos) const{
+		assert(sign == 0);
+		assert(0 <= pos);
+		if(pos / 64 < (int)data.size()) return data[pos / 64] >> pos % 64 & 1;
+		return false;
+	}
+	void set(int pos, bool x){
+		assert(sign == 0);
+		assert(0 <= pos);
+		if(pos / 64 < (int)data.size()) if((data[pos / 64] >> pos % 64 & 1) != x) data[pos / 64] ^= T{1} << pos % 64;
+		else if(x){
+			data.resize(pos / 64 + 1, pad[sign]);
+			data[pos / 64] ^= T{1} << pos % 64;
+		}
+	}
+	// MSB at back()
+	template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>
+	friend pair<bool, vector<U>> to_vector(const bigint &x, U base){
+		assert(base >= 2);
+		if(x < 0) return {1, to_vector(-x, base).second};
+		vector<U> v;
+		for(auto y = x; y; y /= base) v.push_back(y % base);
+		return {0, v};
 	}
 	// TODO: Implement Schoenhage
-	friend string to_string(const bigint_base &x, unsigned int base = 2){
+	// MSB at front()
+	friend string to_string(const bigint &x, unsigned int base){
+		assert(base >= 2);
+		if(!x) return "0";
+		if(x < 0) return '-' + to_string(-x, base);
 		if(base == 2){
-			stringstream ss;
-			ss << x;
 			string s;
-			ss >> s;
+			for(int i = __lg(x.data.back()); i >= 0; -- i) s.push_back('0' + (x.data.back() >> i & 1));
+			for(auto i = (int)x.data.size() - 2; i >= 0; -- i) s += bitset<width>(x.data[i]).to_string();
+			return s;
+		}
+		else if(base <= 10){
+			string s;
+			for(auto y = x; y; y /= base) s.push_back('0' + int(y % base));
+			reverse(s.begin(), s.end());
+			return s;
+		}
+		else if(base == 16){
+			// 0, ..., 9, A, B, C, D, E, F
+			string s;
+			for(auto y = x; y; y /= base){
+				int rem = y % base;
+				s.push_back(rem < 10 ? '0' + rem : rem - 10 + 'A');
+			}
+			reverse(s.begin(), s.end());
 			return s;
 		}
 		else assert(false);
 	}
-	operator bool() const{
-		return sign;
+	friend ostream &operator<<(ostream &out, const bigint &x){
+		return out << to_string(x, 10);
 	}
-	template<class U, typename enable_if<is_integral<U>::value && !is_same<U, bool>::value>::type* = nullptr>
+	operator bool() const{
+		return sign || !data.empty();
+	}
+	template<class U, typename enable_if<is_integral_v<U> && !is_same<U, bool>::value>::type* = nullptr>
 	operator U() const{
 		U x = 0;
-		for(auto i = (int)size() - 1; i >= 0; -- i) x = x << width | data[i];
-		if(sign < 0) x = -x;
+		if(!sign) for(auto i = (int)data.size() - 1; i >= 0; -- i) x = x << min<int>(width, sizeof(U)) | data[i];
+		else x = -U(-*this);
 		return x;
 	}
-	bool operator==(const bigint_base &x) const{ return sign == x.sign && data == x.data; }
-	bool operator!=(const bigint_base &x) const{ return !(*this == x); }
-	bool operator<(const bigint_base &x) const{
-		if(sign != x.sign) return sign < x.sign;
-		if(!*this) return false;
-		if(size() != x.size()) return size() < x.size() ^ sign < 0;
-		for(auto i = (int)size() - 1; i >= 0; -- i) if(data[i] != x.data[i]) return data[i] < x.data[i] ^ sign < 0;
+	template<class U, typename enable_if<is_floating_point_v<U>>::type* = nullptr>
+	operator U() const{
+		U x = 0;
+		if(!sign) for(auto i = (int)data.size() - 1; i >= 0; -- i) x = x * (T_large(1) << width) + data[i];
+		else x = -U(-*this);
+		return x;
+	}
+	bool operator==(const bigint &x) const{ return sign == x.sign && data == x.data; }
+	bool operator!=(const bigint &x) const{ return !(*this == x); }
+	bool operator<(const bigint &x) const{
+		if(sign != x.sign) return sign > x.sign;
+		if(!x) return false;
+		if(data.size() != x.data.size()) return data.size() < x.data.size() ^ sign;
+		for(auto i = (int)data.size() - 1; i >= 0; -- i) if(data[i] != x.data[i]) return data[i] < x.data[i];
 		return false;
 	}
-	bool operator<=(const bigint_base &x) const{ return !(x < *this); }
-	bool operator>=(const bigint_base &x) const{ return !(*this < x); }
-	bool operator>(const bigint_base &x) const{ return x < *this; }
-	friend bigint_base abs(bigint_base x){
-		x.sign = abs(x.sign);
-		return x;
-	}
-	// TODO: bitwise operators: &, |, ^, &=, |=, ^=
-	bigint_base operator+() const{
-		return bigint_base(*this);
-	}
-	bigint_base operator-() const{
-		bigint_base x(*this);
-		x.sign = -x.sign;
-		return x;
-	}
-	static void _add_apply(vector<T> &x, const vector<T> &y){
-		static constexpr T base = T(1) << width;
-		if(x.size() < y.size()) x.resize(y.size());
-		T carry = 0;
-		for(auto i = 0; i < (int)y.size(); ++ i){
-			x[i] += y[i] + carry;
-			if(carry = x[i] >= base) x[i] -= base;
-		}
-		if(carry){
-			if(x.size() == y.size()) x.resize(y.size() + 1);
-			++ x[y.size()];
-		}
-	}
-	// Assumes x is equal or greater than y.
-	static void _subtract_apply(vector<T> &x, const vector<T> &y){
-		static constexpr T base = T(1) << width;
-		T carry = 0, temp;
-		int i = 0;
-		for(auto i = 0; i < (int)y.size() || carry; ++ i){
-			temp = i < (int)y.size() ? y[i] + carry : carry;
-			if(carry = x[i] < temp) x[i] += base;
-			x[i] -= temp;
-		}
-	}
-	static vector<T> _naive_multiplication(const vector<T> &x, const vector<T> &y){
-		static constexpr T cut = (T(1) << width) - 1;
-		if(x.empty() || y.empty()) return {};
-		vector<T> z(x.size() + y.size() - 1);
-		for(auto i = 0; i < (int)x.size(); ++ i) for(auto j = 0; j < (int)y.size(); ++ j){
-			T_large rem = (T_large)x[i] * y[j];
-			for(auto k = i + j; rem; ++ k){
-				if((int)z.size() <= k) z.push_back(0);
-				rem += z[k];
-				z[k] = rem & cut;
-				rem >>= width;
-			}
-		}
-		return z;
-	}
-	// TODO: implement Karatsuba, Toom-Cook, Schönhage–Strassen, and FFT
-	static void _multiply_apply(vector<T> &x, const vector<T> &y){
-		x = _naive_multiplication(x, y);
-	}
-	// TODO: specialize +, -, *, /, %, +=, -=, *=, /=, %= for small integers
-	bigint_base &operator+=(const bigint_base &x){
-		if(!x) return *this;
-		if(!*this) return *this = x;
-		if(sign == x.sign) _add_apply(data, x.data);
-		else{
-			bool negate = false;
-			if(size() < x.size()) negate = true;
-			else if(size() == x.size()){
-				int i = size() - 1;
-				while(i >= 0 && data[i] == x.data[i]) -- i;
-				if(i == -1) return *this = bigint_base();
-				if(data[i] < x.data[i]) negate = true;
-			}
-			if(negate){
-				sign = -sign;
-				auto temp = data;
-				data = x.data;
-				_subtract_apply(data, temp);
-			}
-			else _subtract_apply(data, x.data);
-			trim();
-		}
-		return *this;
-	}
-	bigint_base operator+(const bigint_base &x) const{
-		return bigint_base(*this) += x;
-	}
-	bigint_base &operator-=(const bigint_base &x){
-		if(!x) return *this;
-		if(!*this) return *this = -x;
-		if(sign != x.sign) _add_apply(data, x.data);
-		else{
-			bool negate = false;
-			if(size() < x.size()) negate = true;
-			else if(size() == x.size()){
-				int i = size() - 1;
-				while(i >= 0 && data[i] == x.data[i]) -- i;
-				if(i == -1) return *this = bigint_base();
-				if(data[i] < x.data[i]) negate = true;
-			}
-			if(negate){
-				sign = -sign;
-				auto temp = data;
-				data = x.data;
-				_subtract_apply(data, temp);
-			}
-			else _subtract_apply(data, x.data);
-			trim();
-		}
-		return *this;
-	}
-	bigint_base operator-(const bigint_base &x) const{
-		return bigint_base(*this) -= x;
-	}
-	bigint_base &operator++(){
-		static constexpr T cut = (T(1) << width) - 1;
-		if(!*this){
-			sign = 1;
-			data = {1};
+	bool operator<=(const bigint &x) const{ return !(x < *this); }
+	bool operator>=(const bigint &x) const{ return !(*this < x); }
+	bool operator>(const bigint &x) const{ return x < *this; }
+#define COMPARE_OP(OP)\
+template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>\
+bool operator OP(U x) const{\
+	return *this OP bigint(x);\
+}\
+template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>\
+friend bool operator OP(U x, const bigint &y){\
+	return bigint(x) OP y;\
+}
+// TODO: Make this more efficient
+COMPARE_OP(==) COMPARE_OP(!=) COMPARE_OP(<) COMPARE_OP(<=) COMPARE_OP(>=) COMPARE_OP(>)
+#undef COMPARE_OP
+	bigint &operator>>=(const bigint &_x){
+		assert(0 <= _x && _x <= numeric_limits<int>::max());
+		int x = int(_x);
+		if(x == 0) return *this;
+		if((int)data.size() <= x / 64){
+			data.clear();
 			return *this;
 		}
-		if(sign > 0){
-			int i = 0;
-			while(i < size() && data[i] == cut) data[i ++] = 0;
-			if(i == size()) data.push_back(1);
-			else ++ data[i];
-		}
-		else{
-			int i = 0;
-			while(i < size() && data[i] == 0) data[i ++] = cut;
-			assert(i < size());
-			-- data[i];
-			trim();
-		}
+		data.erase(data.begin(), data.begin() + x / 64);
+		data.push_back(pad[sign]);
+		x %= 64;
+		for(auto i = 0; i < (int)data.size() - 1; ++ i) data[i] = data[i + 1] << 64 - x | data[i] >> x;
+		_trim();
 		return *this;
 	}
-	bigint_base operator++(int){
-		bigint_base x = *this;
+	bigint operator>>(const bigint &x) const{
+		return bigint(*this) >>= x;
+	}
+	bigint &operator<<=(const bigint &_x){
+		assert(0 <= _x && _x <= numeric_limits<int>::max());
+		int x = int(_x);
+		if(x == 0) return *this;
+		data.insert(data.begin(), x / 64, T{0});
+		data.push_back(pad[sign]);
+		const int upto = x / 64;
+		x %= 64;
+		for(auto i = (int)data.size() - 1; i >= upto; -- i) data[i] = data[i] << x | (i > 0 ? data[i - 1] >> 64 - x : T{0});
+		_trim();
+		return *this;
+	}
+	bigint operator<<(const bigint &x) const{
+		return bigint(*this) <<= x;
+	}
+	bigint &operator&=(const bigint &x){
+		if(data.size() < x.data.size()) data.resize(x.data.size(), pad[sign]);
+		for(auto i = 0; i < (int)x.data.size(); ++ i) data[i] &= x.data[i];
+		if(!x.sign) data.resize(x.data.size());
+		sign &= x.sign;
+		_trim();
+		return *this;
+	}
+	bigint operator&(const bigint &x) const{
+		return bigint(*this) &= x;
+	}
+	bigint &operator|=(const bigint &x){
+		if(data.size() < x.data.size()) data.resize(x.data.size(), pad[sign]);
+		for(auto i = 0; i < (int)x.data.size(); ++ i) data[i] |= x.data[i];
+		if(x.sign) data.resize(x.data.size());
+		sign |= x.sign;
+		_trim();
+		return *this;
+	}
+	bigint operator|(const bigint &x) const{
+		return bigint(*this) |= x;
+	}
+	bigint &operator^=(const bigint &x){
+		if(data.size() < x.data.size()) data.resize(x.data.size(), pad[sign]);
+		for(auto i = 0; i < (int)x.data.size(); ++ i) data[i] ^= x.data[i];
+		if(x.sign) for(auto i = (int)x.data.size(); i < (int)data.size(); ++ i) data[i] = ~data[i];
+		sign ^= x.sign;
+		_trim();
+		return *this;
+	}
+	bigint operator^(const bigint &x) const{
+		return bigint(*this) ^= x;
+	}
+	bigint operator+() const{
+		return *this;
+	}
+	bigint operator-() const{
+		if(!*this) return *this;
+		bigint x(*this);
+		x.sign = !x.sign;
+		_negate(x.data);
+		x._trim();
+		return x;
+	}
+	friend bigint abs(bigint x){
+		return x.sign ? -x : x;
+	}
+	bigint &operator+=(const bigint &x){
+		if(!x) return *this;
+		if(!*this) return *this = x;
+		_add_apply(sign, data, x.sign, x.data);
+		_trim();
+		return *this;
+	}
+	bigint operator+(const bigint &x) const{
+		return bigint(*this) += x;
+	}
+	bigint &operator-=(const bigint &x){
+		if(!x) return *this;
+		if(!*this) return *this = -x;
+		_subtract_apply(sign, data, x.sign, x.data);
+		_trim();
+		return *this;
+	}
+	bigint operator-(const bigint &x) const{
+		return bigint(*this) -= x;
+	}
+	bigint &operator++(){
+		unsigned char carry = 1;
+		for(auto i = 0; i < (int)data.size() && carry; ++ i) carry = _addcarry_u64(carry, data[i], 0ULL, &data[i]);
+		if(carry){
+			if(!sign) data.push_back(1);
+			else sign = !sign;
+		}
+		_trim();
+		return *this;
+	}
+	bigint operator++(int){
+		bigint x = *this;
 		++ *this;
 		return x;
 	}
-	bigint_base &operator--(){
-		static constexpr T cut = (T(1) << width) - 1;
-		if(!*this){
-			sign = -1;
-			data = {1};
-			return *this;
+	bigint &operator--(){
+		unsigned char borrow = 1;
+		for(auto i = 0; i < (int)data.size() && borrow; ++ i) borrow = _subborrow_u64(borrow, data[i], 0ULL, &data[i]);
+		if(borrow){
+			if(!sign) sign = !sign;
+			else data.push_back(pad[sign] ^ 1);
 		}
-		if(sign < 0){
-			int i = 0;
-			while(i < size() && data[i] == cut) data[i ++] = 0;
-			if(i == size()) data.push_back(1);
-			else ++ data[i];
-		}
-		else{
-			int i = 0;
-			while(i < size() && data[i] == 0) data[i ++] = cut;
-			assert(i < size());
-			-- data[i];
-			trim();
-		}
+		_trim();
 		return *this;
 	}
-	bigint_base operator--(int){
-		bigint_base x = *this;
+	bigint operator--(int){
+		bigint x = *this;
 		-- *this;
 		return x;
 	}
-	bigint_base operator*=(const bigint_base &x){
-		if(!*this || !x) *this = bigint_base();
-		sign *= x.sign;
-		_multiply_apply(data, x.data);
+	bigint &operator*=(const bigint &x){
+		if(!*this || !x) return *this = bigint();
+		data = _multiply(abs(*this).data, abs(x).data);
+		sign ^= x.sign;
+		if(sign) _negate(data);
+		_trim();
 		return *this;
 	}
-	bigint_base operator*(const bigint_base &x) const{
-		return bigint_base(*this) *= x;
+	bigint operator*(const bigint &x) const{
+		return bigint(*this) *= x;
 	}
-	template<class U, typename enable_if<is_integral<U>::value>::type* = nullptr>
-	bigint_base &inplace_power(U e){
+	template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>
+	bigint &inplace_power(U e){
 		assert(e >= 0);
-		bigint_base res(1);
+		bigint res(1);
 		for(; e; e >>= 1, *this *= *this) if(e & 1) res *= *this;
 		return *this = res;
 	}
-	template<class U, typename enable_if<is_integral<U>::value>::type* = nullptr>
-	bigint_base power(U e) const{
-		return bigint_base(*this).inplace_power(e);
+	template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>
+	bigint power(U e) const{
+		return bigint(*this).inplace_power(e);
 	}
-	// Todo: Implement Knuth and Burnikel-Ziegler
-	friend pair<bigint_base, bigint_base> div(const bigint_base &x, const bigint_base &y){
-		// TODO
-		return {};
+	static pair<vector<T>, T> small_div(const vector<T> &x, T y){
+		assert(y);
+		T_large rem = 0;
+		vector<T> q((int)x.size());
+		for(auto i = (int)x.size() - 1; i >= 0; -- i){
+			rem = rem << width | x[i];
+			q[i] = rem / y;
+			rem = rem % y;
+		}
+		return {q, rem};
 	}
-	bigint_base &operator/=(const bigint_base &x){
-		// TODO
-		return *this;
+	// Todo: Implement Burnikel-Ziegler
+	// Assumes x is non-negative and y is positive
+	// Returns {quotient, remainder} pair
+	static pair<vector<T>, vector<T>> large_div(const vector<T> &x, const vector<T> &y){
+		assert(!y.empty());
+		int m = (int)x.size(), n = (int)y.size();
+		if(m < n) return {{}, x};
+		if(n == 1){
+			auto [q, r] = small_div(x, y[0]);
+			return {q, {r}};
+		}
+		vector<T> q(m - n + 1), r(n), xn(m + 1), yn(n);
+		T_large qhat, rhat, p;
+		int s = __builtin_clzll(y[n - 1]);
+		for(auto i = n - 1; i > 0; -- i) yn[i] = y[i] << s | (T_large)y[i - 1] >> width - s;
+		yn[0] = y[0] << s;
+		xn[m] = (T_large)x[m - 1] >> width - s;
+		for(auto i = m - 1; i > 0; -- i) xn[i] = x[i] << s | (T_large)x[i - 1] >> width - s;
+		xn[0] = x[0] << s;
+		__int128_t t, k;
+		static const T_large base = T_large(1) << width;
+		for(auto j = m - n; j >= 0; -- j){
+			qhat = (xn[j + n] * base + xn[j + n - 1]) / yn[n - 1];
+			rhat = (xn[j + n] * base + xn[j + n - 1]) % yn[n - 1];
+			FLAG:
+			if(qhat >= base || (T)qhat * (T_large)yn[n - 2] > base * rhat + xn[j + n - 2]){
+				-- qhat;
+				rhat += yn[n - 1];
+				if(rhat < base) goto FLAG;
+			}
+			k = 0;
+			for(auto i = 0; i < n; ++ i){
+				p = (T)qhat * (T_large)yn[i];
+				t = xn[i + j] - k - (p & base - 1);
+				xn[i + j] = t;
+				k = (p >> width) - (t >> width);
+			}
+			t = xn[j + n] - k;
+			xn[j + n] = t;
+			q[j] = qhat;
+			if(t < 0){
+				-- q[j];
+				k = 0;
+				for(auto i = 0; i < n; ++ i){
+					t = (T_large)xn[i + j] + yn[i] + k;
+					xn[i + j] = t;
+					k = t >> width;
+				}
+				xn[j + n] += k;
+			}
+		}
+		if(!r.empty()){
+			for(auto i = 0; i < n - 1; ++ i) r[i] = xn[i] >> s | (T_large)xn[i + 1] << width - s;
+			r[n - 1] = xn[n - 1] >> s;
+		}
+		return {q, r};
 	}
-	bigint_base operator/(const bigint_base &x) const{
-		return bigint_base(*this) /= x;
+	friend pair<bigint, bigint> bigint_div(const bigint &x, const bigint &y){
+		assert(y);
+		bigint q, r;
+		tie(q.data, r.data) = large_div(abs(x).data, abs(y).data);
+		q.sign = x.sign ^ y.sign;
+		r.sign = x.sign;
+		while(!q.data.empty() && !q.data.back()) q.data.pop_back();
+		if(q.data.empty()) q.sign = 0;
+		else if(q.sign) _negate(q.data);
+		while(!r.data.empty() && !r.data.back()) r.data.pop_back();
+		if(r.data.empty()) r.sign = 0;
+		else if(r.sign) _negate(r.data);
+		q._trim();
+		r._trim();
+		if(x.sign != y.sign && r){
+			-- q;
+			r += y;
+		}
+		return {q, r};
 	}
-	bigint_base &operator%=(const bigint_base &x){
-		// TODO
-		return *this;
+	bigint &operator/=(const bigint &x){
+		return *this = bigint_div(*this, x).first;
 	}
-	bigint_base operator%(const bigint_base &x) const{
-		return bigint_base(*this) %= x;
+	bigint operator/(const bigint &x) const{
+		return bigint(*this) /= x;
 	}
-	friend bigint_base gcd(const bigint_base &x, const bigint_base &y){
+	bigint &operator%=(const bigint &x){
+		return *this = bigint_div(*this, x).second;
+	}
+	bigint operator%(const bigint &x) const{
+		return bigint(*this) %= x;
+	}
+#define BINARY_OP(APPLY_OP, OP)\
+template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>\
+bigint &operator APPLY_OP(U x){\
+	return *this APPLY_OP bigint(x);\
+}\
+template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>\
+bigint operator OP(U x) const{\
+	return bigint(*this) APPLY_OP bigint(x);\
+}\
+template<class U, typename enable_if<is_integral_v<U>>::type* = nullptr>\
+friend bigint operator OP(U x, const bigint &y){\
+	return bigint(y) APPLY_OP bigint(x);\
+}
+// TODO: Make this more efficient
+BINARY_OP(>>=, >>) BINARY_OP(<<=, <<) BINARY_OP(&=, &) BINARY_OP(|=, |) BINARY_OP(^=, ^) BINARY_OP(+=, +) BINARY_OP(-=, -) BINARY_OP(*=, *) BINARY_OP(/=, /) BINARY_OP(%=, %)
+#undef BINARY_OP
+	// TODO: Implement half-gcd
+	friend bigint gcd(const bigint &x, const bigint &y){
+		if(x.sign || y.sign) return gcd(abs(x), abs(y));
 		return y ? gcd(y, x % y) : x;
 	}
-	friend bigint_base lcm(const bigint_base &x, const bigint_base &y){
+	friend bigint lcm(const bigint &x, const bigint &y){
+		if(x.sign || y.sign) return lcm(abs(x), abs(y));
 		return x / gcd(x, y) * y;
 	}
+	template<class Iter>
+	static bigint sum(Iter begin, Iter end){
+		int n = end - begin;
+		vector<bigint> temp(n << 1);
+		for(auto i = 0; i < n; ++ i) temp[n + i] = *(begin + i);
+		for(auto i = n - 1; i >= 1; -- i) temp[i] = temp[i << 1] + temp[i << 1 | 1];
+		bigint res = 0;
+		for(auto l = n, r = n << 1; l < r; l >>= 1, r >>= 1){
+			if(l & 1) res += temp[l ++];
+			if(r & 1) res += temp[-- r];
+		}
+		return res;
+	}
+	template<class Iter>
+	static bigint product(Iter begin, Iter end){
+		int n = end - begin;
+		vector<bigint> temp(n << 1);
+		for(auto i = 0; i < n; ++ i) temp[n + i] = *(begin + i);
+		for(auto i = n - 1; i >= 1; -- i) temp[i] = temp[i << 1] * temp[i << 1 | 1];
+		bigint res = 1;
+		for(auto l = n, r = n << 1; l < r; l >>= 1, r >>= 1){
+			if(l & 1) res *= temp[l ++];
+			if(r & 1) res *= temp[-- r];
+		}
+		return res;
+	}
+#if __cplusplus > 201703L
+	template<ranges::random_access_range R>
+	static bigint sum(R &&r){
+		return sum(r.begin(), r.end());
+	}
+	template<ranges::random_access_range R>
+	static bigint product(R &&r){
+		return product(r.begin(), r.end());
+	}
+#endif
 };
-using bigint = bigint_base<unsigned long long, __uint128_t, 63>;
 
-void solve(){   
-    
+bigint dp[55][55][55],f[55];
+int kmp[55],nxt[55][26];
+
+int n;
+
+bigint cal(bool B,string S){
+	int m=(int)S.length();
+	S="#"+S+"$";
+
+	kmp[0]=-1;kmp[1]=0;
+	for(int i=2;i<=m;i++){
+		int j=kmp[i-1];
+		while(j!=-1 && S[j+1]!=S[i]) j=kmp[j];
+		kmp[i]=j+1;
+	}
+
+	for(int i=0;i<=m;i++) for(int j=0;j<26;j++){
+		int k=i;
+		while(S[k+1]!=(j+'a')){
+			if(S[k+1]>(j+'a')){k=-1;break;}
+			if(k) k=kmp[k];
+			else break;
+		}
+		nxt[i][j]=k+(S[k+1]==(j+'a'));
+	}
+	for(int x=(B?0:m-1);x<=m;x++){
+		for(int i=0;i<=x;i++) dp[0][i][0]=0;
+		dp[0][x][0]=1;
+		for(int i=0;i<n;i++){
+			for(int j=0;j<=x;j++) for(int k=0;k<=i+1;k++) dp[i+1][j][k]=0;
+			for(int j=0;j<=x;j++) for(int k=0;k<=i;k++) if(dp[i][j][k]>0){
+				for(int c=0;c<26;c++) if(nxt[j][c]!=-1 && nxt[j][c]<=x) dp[i+1][nxt[j][c]][k+(nxt[j][c]==x)]+=dp[i][j][k];
+			}
+		}
+		f[x]=0;
+		for(int i=1;i<=n;i++) for(int d=0;d<=i;d++) if(dp[i][x][d]>0){
+			for(int k=2;i*k<=n;k++) dp[i*k][x][d*k]-=dp[i][x][d];
+			if(i>m || x!=m) f[x]+=dp[i][x][d]/d;
+		}
+	}
+
+	bigint total=0;
+	for(int i=0;i<=m;i++) total+=f[i];
+	return total;
+}
+
+void solve(){  
+	string S;
+	
+	long long sK;
+	cin >> n >> sK >> S;
+	bigint K(sK-1);
+	bigint total=cal(1,S);
+	if(total<K){
+		cout << -1 << '\n';
+		return;
+	}
+	K=total-K;
+
+	string res;
+	for(int i=0;i<n;i++){
+		int l=0,r=25,C=-1;
+		while(l<=r){
+			int x=(l+r)>>1;
+			res+=char(x+'a');
+			if(cal(0,res)>=K) C=x,l=x+1;
+			else r=x-1;
+			res.pop_back();
+		}
+		assert(C!=-1);
+		res+=char(C+'a');
+		if(cal(0,res)==K){
+			cout << res << '\n';
+			return;
+		}
+	}
+	cout << -1 << '\n';
 }
 
 signed main(){
