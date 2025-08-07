@@ -134,10 +134,10 @@ void solve(){
     for(int i=q;i>=1;i--) update(que[i].fi,que[i].se,i);
     dfs2(0,0);
     cout << total << '\n';
-    reverse(ans.begin(),ans.end());
-    cout << (int)ans.size() << ' ';
-    for(int x:ans) cout << x << ' ';
-    cout << '\n';
+    //reverse(ans.begin(),ans.end());
+    //cout << (int)ans.size() << ' ';
+    //for(int x:ans) cout << x << ' ';
+    //cout << '\n';
     for(int x:res) cout << x << ' ';
     cout << '\n';
 }
