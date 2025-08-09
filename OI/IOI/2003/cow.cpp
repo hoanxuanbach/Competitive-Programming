@@ -10,11 +10,20 @@ int N,P;
 ll cc[15][15];
 char c[maxn][15];
 vector<char> C={'X','Y','Z'};
+
+const int K=(1<<20);
+pii MP[K+5];
+
 map<ll,pii> mp;
 
 int build(ll mask){
-    if(mp.find(mask)!=mp.end()) return mp[mask].fi;
     if(__builtin_popcountll(mask)==1) return 0;
+
+    if(mask<K){
+        if(MP[mask].fi!=0) return MP[mask].fi;
+    }
+    else if(mp.find(mask)!=mp.end()) return mp[mask].fi;
+    
     int step=inf,pos=-1;
     for(int i=0;i<P;i++) for(int j=0;j<3;j++){
         ll a=mask&cc[i][j],b=mask^a;
@@ -22,7 +31,8 @@ int build(ll mask){
         int val=max(build(a),build(b));
         if(val<step) step=val,pos=i*3+j;
     }
-    mp[mask]={step+1,pos};
+    if(mask<K) MP[mask]={step+1,pos};
+    else mp[mask]={step+1,pos};
     return step+1;
 }
 void query(ll mask){
@@ -32,7 +42,9 @@ void query(ll mask){
         }
         return;
     }
-    int s=mp[mask].se;
+    int s=-1;
+    if(mask<K) s=MP[mask].se;
+    else s=mp[mask].se;
     int i=s/3,j=s%3;
     ll a=mask&cc[i][j],b=mask^a;
     cout << "Q " << i+1 << ' ' << C[j] << endl;

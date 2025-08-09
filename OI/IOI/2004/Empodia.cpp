@@ -1,9 +1,7 @@
 #include<bits/stdc++.h>
 using namespace std;
-const int maxn = 2000005;
-vector<int> pos[2*maxn],dd[maxn];
+const int maxn = 1100005;
 int n,a[maxn],l[maxn],r[maxn],p[maxn];
-bool del[maxn];
 
 signed main(){
     ios_base::sync_with_stdio(false);
@@ -25,17 +23,22 @@ signed main(){
         v.push_back(i);
         //cout << r[i] << ' ';
     }
-    //cout << '\n';
-    for(int i=1;i<=n;i++){
-        for(int x:dd[i]) del[x]=true;
-        dd[r[i]].push_back(i);
-        int k=a[i]-i+n;
-        while(!pos[k].empty() && del[pos[k].back()]) pos[k].pop_back();
+    v.clear();
+    vector<pair<int,int>> P;
+    for(int i=1;i<=n;i++) P.push_back({a[i]-i+n,i});
+    sort(P.begin(),P.end());
+
+    int lst=-1;
+    for(auto [k,i]:P){
+        if(k!=lst) v.clear();
+        while(!v.empty() && r[v.back()]<=i) v.pop_back();
         int mx=0;
-        if(!pos[k].empty()) mx=pos[k].back();
+        if(!v.empty()) mx=v.back();
         if(mx>l[i]) p[i]=mx;
-        pos[k].push_back(i);
+        v.push_back(i);
+        lst=k;
     }
+
     v.clear();
     vector<pair<int,int>> ans;
     for(int i=1;i<=n;i++){
