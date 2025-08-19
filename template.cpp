@@ -29,7 +29,13 @@ void combi(int n){
     }
 }
 int C(int n,int k){
+    if(n<k || n<0 || k<0) return 0;
     return fac[n]*dfac[k]%mod*dfac[n-k]%mod;
+}
+
+mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
+int rand_int(int l,int r){
+    return l+abs((int)rng())%(r-l+1);
 }
 
 void solve(){   
