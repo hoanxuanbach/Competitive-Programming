@@ -46,3 +46,35 @@ For each query of type 2, output a single line containing $k$ integers — the l
 - Flipping a color means changing it from `0` to `1`, or from `1` to `0`.
 - You may assume that the number of valid vertices in each type 2 query is at least $k`, so the answer always exists.
 
+### Example
+
+**Input**
+
+5 5
+
+1 0 0 0 0
+
+1 2 -672069678
+
+2 4 -961259426
+
+3 4 -277118350
+
+4 5 -809672605
+
+1 3
+
+1 1
+
+2 1 1 1 1
+
+2 2 5 1 1
+
+1 1
+
+**Output**
+
+	
+-1910447454 
+
+-1086790955 
