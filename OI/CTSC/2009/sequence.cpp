@@ -34,8 +34,12 @@ int C(int n,int k){
 
 void solve(){   
     int n,mx,A,B;cin >> n >> mx >> A >> B;
+    int res=0;
     vector<int> x(n),f(n);
-    for(int i=0;i<n;i++) cin >> x[i];
+    for(int i=0;i<n;i++){
+        cin >> x[i];
+        if(x[i]<=A*i) res+=A*i+1-x[i],x[i]=A*i+1;
+    }
     priority_queue<int> L;
     priority_queue<int,vector<int>,greater<int>> R;
     L.push(x[0]);R.push(x[0]);
@@ -49,7 +53,6 @@ void solve(){
         f[i]=min(mx,max(A*i+1,L.top()+tl));
     }
     for(int i=n-2;i>=0;i--) f[i]=max(min(f[i],f[i+1]-A),f[i+1]-B);
-    int res=0;
     for(int i=0;i<n;i++) res+=abs(x[i]-f[i]);
     cout << res << '\n';
 }
