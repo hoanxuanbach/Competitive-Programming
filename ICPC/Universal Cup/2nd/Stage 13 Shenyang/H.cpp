@@ -17,8 +17,6 @@ typedef tree<int,null_type,less<int>,rb_tree_tag,tree_order_statistics_node_upda
 - find_by_order(k): return iterator to the k-th smallest element
 - order_of_key(x): the number of elements that are strictly smaller
 */
-#pragma GCC optimize("Ofast,unroll-loops")
-#pragma GCC target("avx2,fma")
 #include<bits/stdc++.h>
 using namespace std;
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
