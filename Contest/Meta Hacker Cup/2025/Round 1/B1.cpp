@@ -2,7 +2,7 @@
 using namespace std;
 #define int long long 
 #define pii pair<int,int>
-const int mod = 1e9+7;
+const int mod = 998244353;
 int power(int a,int n){
     int res=1;
     while(n){
@@ -20,24 +20,13 @@ int rand_int(int l,int r){
     return l+abs((int)rng())%(r-l+1);
 }
 
-
 void solve(){
-    int n;cin >> n;
-    string S;cin >> S;
-    int cnt=0;
-    for(int i=n-1;i>=0;i--){
-        cnt+=(S[i]=='A'?1:-1);
-        if(cnt>0){
-            cout << "Alice\n";
-            return;
-        }
-    }
-    cout << "Bob\n";
+    int n,a,b;cin >> n >> a >> b;
+    for(int i=1;i<2*n;i++) cout << 1 << ' ';
+    cout << b << '\n';
 }
  
 signed main(){
-    freopen("A.inp","r",stdin);
-    freopen("A.txt","w",stdout);
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);cout.tie(NULL);
     int test=1;cin >> test;
