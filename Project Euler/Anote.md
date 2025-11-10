@@ -43,3 +43,13 @@ Snell law
 Problem 772:
 
 The formula is 2*lcm(1,2,...,k)
+
+Problem P484:
+
+using Mobius inversion formula to find that:
+
+g(n) = sum(d|n) f(d)
+f(n) = sum(d|n) u(d)*g(n/d)
+
+Problem P957:
+
