@@ -51,5 +51,7 @@ using Mobius inversion formula to find that:
 g(n) = sum(d|n) f(d)
 f(n) = sum(d|n) u(d)*g(n/d)
 
-Problem P957:
+Problem P199:
+
+Descartes theorem
 
