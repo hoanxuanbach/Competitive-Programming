@@ -55,3 +55,6 @@ Problem P199:
 
 Descartes theorem
 
+Problem 969:
+
+Uniform Sum Distribution
