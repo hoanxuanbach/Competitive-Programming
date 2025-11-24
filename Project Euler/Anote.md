@@ -58,3 +58,7 @@ Descartes theorem
 Problem 969:
 
 Uniform Sum Distribution
+
+Problem 479:
+
+Using Vieta to calculate (a+b)\*(b+c)\*(c+a)
