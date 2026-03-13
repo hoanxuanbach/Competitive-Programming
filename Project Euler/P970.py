@@ -1,44 +1,37 @@
-from decimal import Decimal, getcontext
+import mpmath as mp
 
-getcontext().prec = 20
+def cal(n,lim):
+    n = mp.mpf(n)
+    res = mp.mpf('0')
+    for k in range(1,lim+1):
+        s = 1+mp.lambertw(-mp.e**-1,k)
+        res += 2*mp.re(mp.e**(s*n)/s)    
+    return res
 
-e = Decimal(1).exp()
-
-#print(e)
-
-'''
-H(n) = sum(k = 0 -> n) (-1)^k*(n-k)^k/k!*e^(n-k)
-'''
-
+mp.mp.dps = 100
 n = int(input())
+lim = int(input())
+D = cal(n,lim)
+M = int(mp.ceil(-mp.log10(mp.fabs(D))))
 
-res = 0
-p = Decimal(n)
+for i in range(1,10):
+    if(M): 
+        M-=1
 
-for k in range(n):
-    if(k%1000==0):
-        print(k,flush=True)
+X = D*mp.power(10,M)+mp.mpf(2)/3
+K = X-mp.floor(X)
+T = 8
+S = ""
 
-    if(k):
-        p-=Decimal(k).ln()
+while(len(S)<T):
+    K*=10
+    d=int(mp.floor(K))
+    K-=d
 
-    x=p+Decimal(n-k).ln()*k
-    x=e**x
-    
-    if(k&1):
-        res-=x
-    else: 
-        res+=x
-    
-    p-=1
-
-print(res)
-
-S = 0
-while(S<(10**7)):
-    res*=10
-    d = int(res)%10
     if(d!=6):
-        S=S*10+d
+        S+=chr(ord('0')+d)
 
 print(S)
+
+
+
