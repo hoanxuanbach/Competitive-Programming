@@ -21,29 +21,25 @@ int rand_int(int l,int r){
 }
 
 void solve(){
-    int n,M,T;cin >> n >> M >> T;
+    int A,B;cin >> A >> B;
+    vector<int> d(A),f(A);
+
+    for(int i=0;i<A;i++) f[i]=i*B%A,d[i]=((i+1)*B%A>i*B%A?(B/A):(B/A)+1);
+    vector<vector<int>> dp(A,vector<int>(B)),cnt(A,vector<int>(B));
+    cnt[0][0]=1;
+    for(int i=0;i+1<A;i++) for(int j=0;j<B;j++) if(cnt[i][j]){
+        
+        cnt[i+1][j+d[i]]+=cnt[i][j];
+        dp[i+1][j+d[i]]+=dp[i][j];
+
+        for(int k=0;k<(j+d[i]);k++){
+            cnt[i+1][k]+=cnt[i][j];
+            dp[i+1][k]+=dp[i][j]+cnt[i][j]*(k*A+f[i+1]);
+        }
+    }
 
     int res=0;
-    vector<int> cnt(n+1);
-    function<void(int,int,int,int,int)> dfs = [&](int i,int p,int q,int r,int s){
-        if(i){
-            if(abs(s+p)<=1){
-                cnt[i]++;
-            }
-        } 
-        if(i==n || abs(p)>T || abs(r)>T) return;
-        for(int x=0;x<=M;x++){
-            int np=p*x+q,nq=-p,nr=r*x+s,ns=-r;
-            dfs(i+1,np,nq,nr,ns);
-        }
-    };
-    dfs(0,1,0,0,1);
-    
-    for(int x=1;x<=n;x++){
-        cnt[x]+=(x>1);
-        for(int i=2*x;i<=n;i+=x) cnt[i]-=cnt[x];
-        res+=cnt[x];
-    }
+    for(int i=0;i<B;i++) res+=dp[A-1][i];
     cout << res << '\n';
 }
  

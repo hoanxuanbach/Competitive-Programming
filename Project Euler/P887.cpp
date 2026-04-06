@@ -20,29 +20,28 @@ int rand_int(int l,int r){
     return l+abs((int)rng())%(r-l+1);
 }
 
-void solve(){
-    int n,M,T;cin >> n >> M >> T;
+const int D = 100;
+const int K = 100;
 
-    int res=0;
-    vector<int> cnt(n+1);
-    function<void(int,int,int,int,int)> dfs = [&](int i,int p,int q,int r,int s){
-        if(i){
-            if(abs(s+p)<=1){
-                cnt[i]++;
-            }
-        } 
-        if(i==n || abs(p)>T || abs(r)>T) return;
-        for(int x=0;x<=M;x++){
-            int np=p*x+q,nq=-p,nr=r*x+s,ns=-r;
-            dfs(i+1,np,nq,nr,ns);
+void solve(){
+    int N=1;
+    for(int x=1;x<=10;x++) N*=7;
+
+    vector<vector<int>> f(K,vector<int>(D+1,1));
+    for(int k=1;k<K;k++){
+        f[k][0]=f[k-1][0]+1;
+        for(int d=1;d<=D;d++) f[k][d]=min(inf,f[k-1][d-1]+f[k-1][min(D,d+f[k-1][d-1]-1)]);
+    }
+
+    cout << N << '\n';
+    int res=N*(N-1)/2;
+    for(int d=1;d<=7;d++){
+        for(int k=1;k<K;k++){
+            cout << f[k-1][d] << ' ';
+            if(f[k-1][d]>N) break;
+            res+=(min(f[k][d],N)-f[k-1][d])*k;
         }
-    };
-    dfs(0,1,0,0,1);
-    
-    for(int x=1;x<=n;x++){
-        cnt[x]+=(x>1);
-        for(int i=2*x;i<=n;i+=x) cnt[i]-=cnt[x];
-        res+=cnt[x];
+        cout << endl;
     }
     cout << res << '\n';
 }

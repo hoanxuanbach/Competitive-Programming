@@ -21,28 +21,22 @@ int rand_int(int l,int r){
 }
 
 void solve(){
-    int n,M,T;cin >> n >> M >> T;
-
+    int N;cin >> N;
+    auto f = [&](int k,int i){
+        int b=(4-k)*i,a=2*(k-2)*i+1;
+        int A=a*a,B=(b*b*(k-2)+b*(4-k))/2;
+        return pii{A,B};
+    };  
     int res=0;
-    vector<int> cnt(n+1);
-    function<void(int,int,int,int,int)> dfs = [&](int i,int p,int q,int r,int s){
-        if(i){
-            if(abs(s+p)<=1){
-                cnt[i]++;
-            }
-        } 
-        if(i==n || abs(p)>T || abs(r)>T) return;
-        for(int x=0;x<=M;x++){
-            int np=p*x+q,nq=-p,nr=r*x+s,ns=-r;
-            dfs(i+1,np,nq,nr,ns);
+    for(int k=3;;k+=2){
+        auto [A,B]=f(k,1);
+        if(max(A,B)>N) break;
+        res+=A+B;
+        for(int i=2;;i++){
+            tie(A,B)=f(k,i);
+            if(max(A,B)>N) break;
+            res+=A+B;
         }
-    };
-    dfs(0,1,0,0,1);
-    
-    for(int x=1;x<=n;x++){
-        cnt[x]+=(x>1);
-        for(int i=2*x;i<=n;i+=x) cnt[i]-=cnt[x];
-        res+=cnt[x];
     }
     cout << res << '\n';
 }

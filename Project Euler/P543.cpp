@@ -20,29 +20,30 @@ int rand_int(int l,int r){
     return l+abs((int)rng())%(r-l+1);
 }
 
-void solve(){
-    int n,M,T;cin >> n >> M >> T;
+const int N = 8e8;
+bitset<N+5> P;
 
-    int res=0;
-    vector<int> cnt(n+1);
-    function<void(int,int,int,int,int)> dfs = [&](int i,int p,int q,int r,int s){
-        if(i){
-            if(abs(s+p)<=1){
-                cnt[i]++;
-            }
-        } 
-        if(i==n || abs(p)>T || abs(r)>T) return;
-        for(int x=0;x<=M;x++){
-            int np=p*x+q,nq=-p,nr=r*x+s,ns=-r;
-            dfs(i+1,np,nq,nr,ns);
-        }
+void solve(){
+    for(int i=2;i<=N;i++) if(!P[i]) for(int j=i*2;j<=N;j+=i) P[j]=1;
+    auto f = [&](int N){
+        int cnt=0;
+        for(int i=2;i<=N;i++) if(!P[i]) cnt++;
+        return cnt;
     };
-    dfs(0,1,0,0,1);
-    
-    for(int x=1;x<=n;x++){
-        cnt[x]+=(x>1);
-        for(int i=2*x;i<=n;i+=x) cnt[i]-=cnt[x];
-        res+=cnt[x];
+    auto cal = [&](int N){
+        int total=(N/2)*(N/2+1);
+        if(N%2==0) total-=N/2;
+        if(N>=2) total-=N-1-f(N);
+        if(N>=4) total-=N-1-f(N-2)-N/2;
+        return total;
+    };
+    //int N;cin >> N;
+    int M=44;
+    int A=1,B=1,res=0;
+    for(int i=3;i<=M;i++){
+        cout << i << endl;
+        swap(A,B);B+=A;
+        res+=cal(B);
     }
     cout << res << '\n';
 }

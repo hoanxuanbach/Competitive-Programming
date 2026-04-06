@@ -21,30 +21,33 @@ int rand_int(int l,int r){
 }
 
 void solve(){
-    int n,M,T;cin >> n >> M >> T;
-
-    int res=0;
-    vector<int> cnt(n+1);
-    function<void(int,int,int,int,int)> dfs = [&](int i,int p,int q,int r,int s){
-        if(i){
-            if(abs(s+p)<=1){
-                cnt[i]++;
-            }
-        } 
-        if(i==n || abs(p)>T || abs(r)>T) return;
-        for(int x=0;x<=M;x++){
-            int np=p*x+q,nq=-p,nr=r*x+s,ns=-r;
-            dfs(i+1,np,nq,nr,ns);
-        }
-    };
-    dfs(0,1,0,0,1);
+    /*
+    S(m,n) = ((m+2)*(m+1)/2)^n-(m+1)^n
+    E(m,n) = v2((m+1)^n * ((m+2)^n - 2^n))  - n
+    = v2(m+1)*n+v2((m+2)^n-2^n)-n
+    m even -> E(m,n) = v2(k^n-1), k = m/2+1
+    m odd ->  E(m,n) = v2(m+1)*n-n 
     
-    for(int x=1;x<=n;x++){
-        cnt[x]+=(x>1);
-        for(int i=2*x;i<=n;i+=x) cnt[i]-=cnt[x];
-        res+=cnt[x];
-    }
-    cout << res << '\n';
+    v2(k^n-1)
+    k even -> v2(k^n-1) = 0
+    n = 2^x*d
+    -> v2(k^n-1) = v2(k^(2^x)-1)
+    */
+
+    auto v2 = [&](int x){
+        int d=0;
+        while(x%2==0) x/=2,d++;
+        return d;
+    };
+    auto f = [&](int n){
+        return n-__builtin_popcountll(n);
+    };
+
+    int n=904961;
+    int M;cin >> M;
+    int A=M/2,B=(M+1)/2;
+    cout << f(B)*n+f(A) << '\n';
+
 }
  
 signed main(){
