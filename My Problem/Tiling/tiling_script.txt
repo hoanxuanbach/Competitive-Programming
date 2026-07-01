@@ -1,0 +1,12 @@
+<#list 1..10 as i>
+    tiling_generator -mode=line ${i} > $
+</#list>
+<#list 1..10 as i>
+    tiling_generator -mode=01 ${i} > $
+</#list>
+<#list 1..10 as i>
+    tiling_generator -mode=full ${i} > $
+</#list>
+<#list 1..10 as i>
+    tiling_generator -mode=non ${i} > $
+</#list>
